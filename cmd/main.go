@@ -22,6 +22,7 @@ func main() {
 	handler := handlers.NewTaskHandler(service)
 
 	e.GET("/task", handler.GetTask)
+	e.GET("/task/:id", handler.GetTaskByID)
 	e.POST("/task", handler.PostTask)
 	e.PATCH("/task/:id", handler.PatchTask)
 	e.DELETE("/task/:id", handler.DeleteTask)

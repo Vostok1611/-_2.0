@@ -63,6 +63,19 @@ func (h *TaskHandler) GetTask(c echo.Context) error {
 	return c.JSON(http.StatusOK, tasks)
 }
 
+func (h *TaskHandler) GetTaskByID(c echo.Context) error {
+	id, err := parseID(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid ID"})
+	}
+
+	task, err := h.service.GetTaskByID(id)
+	if err != nil {
+		return handError(c, err)
+	}
+	return c.JSON(http.StatusOK, task)
+}
+
 func (h *TaskHandler) PatchTask(c echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
