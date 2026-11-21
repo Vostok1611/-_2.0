@@ -1,0 +1,190 @@
+openapi: 3.0.0
+info:
+  title: API
+  version: 1.0.0
+
+paths:
+  /tasks:                                       # Эндпоинт для работы со списком задач
+    get:
+      operationId: getTasks                     # Имя Go-функции: GetTasks
+      summary: Get all tasks                    # Получить все задачи
+      tags:                                     # Тег для группировки
+        - tasks
+      responses:
+        '200':                                  # Успешный ответ (OK)
+          description: A list of tasks
+          content:
+            application/json:
+              schema:
+                type: array                     # Возвращаем массив
+                items:
+                  $ref: '#/components/schemas/Task' # Элементы массива — объекты Task
+        '500':                                  # Внутренняя ошибка сервера
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: postTasks                    # Имя Go-функции: PostTasks
+      summary: Create a new task                # Создать новую задачу
+      tags:
+        - tasks
+      requestBody:                              # Что клиент отправляет в теле запроса
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '201':                                  # Успешно создано (Created)
+          description: The created task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':                                  # Ошибка валидации (Bad Request, например, пустое имя)
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':                                  # Внутренняя ошибка сервера
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/{id}:                                  # Эндпоинт для работы с конкретной задачей по ID
+    get:
+      operationId: getTasksById                 # Имя Go-функции: GetTasksById
+      summary: Get task by id                   # Получить одну задачу по ID
+      tags:
+        - tasks
+      parameters:                               # Параметры запроса (в данном случае ID из URL)
+        - name: id
+          in: path                              # Параметр берется из пути URL (например, /tasks/5)
+          required: true
+          schema:
+            type: integer
+            format: uint                        # Только положительные числа
+      responses:
+        '200':                                  # Успешно найдено
+          description: The task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':                                  # Задача с таким ID не найдена (Not Found)
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':                                  # Внутренняя ошибка сервера
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      operationId: patchTasksById               # Имя Go-функции: PatchTasksById
+      summary: Update task by id                # Обновить задачу по ID
+      tags:
+        - tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      requestBody:                              # Новые данные для обновления
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '200':                                  # Успешно обновлено
+          description: The updated task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':                                  # Ошибка валидации (например, пустое имя)
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':                                  # Задача с таким ID не найдена
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':                                  # Внутренняя ошибка сервера
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteTasksById              # Имя Go-функции: DeleteTasksById
+      summary: Delete task by id                # Удалить задачу по ID
+      tags:
+        - tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      responses:
+        '204':                                  # Успешно удалено, тело ответа пустое (No Content)
+          description: Task deleted
+        '404':                                  # Задача с таким ID не найдена
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':                                  # Внутренняя ошибка сервера
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Task:                                       # Схема полной задачи (то, что отдает сервер)
+      type: object
+      required: [id, task, is_done]             # Эти поля обязательны в ответе
+      properties:
+        id:
+          type: integer
+          format: uint                          # ID в БД только положительные числа
+        task:
+          type: string
+        is_done:
+          type: boolean
+          
+    TaskInput:                                  # Схема того, что присылает клиент (для POST и PATCH)
+      type: object
+      required: [task]                          # Клиент ОБЯЗАН прислать название задачи
+      properties:
+        task:
+          type: string
+        is_done:
+          type: boolean                         # is_done можно не присылать (по умолчанию false)
+          
+    Error:                                      # Схема стандартной ошибки
+      type: object
+      required: [error]                         # Поле error есть всегда
+      properties:
+        error:
+          type: string                          # Текст ошибки
